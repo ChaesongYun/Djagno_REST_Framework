@@ -153,7 +153,9 @@ REST_FRAMEWORK = {
     # 로그인한 유저에 대해서는 장고모델에 대해서 CRUD가 모두 가능하다
     # 로그인하지 않은 유저(anonymous user)는 R만 가능하다
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+        # 'rest_framework.permissions.DjangoModelPermissions',
+        'rest_framework.permissions.IsAuthenticated',
     ]
     # 이걸 주석처리하면 로그인 하든 안하든 모두에게 CRUD가 허용됨
 }

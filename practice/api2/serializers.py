@@ -10,6 +10,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         
         
 class PostListSerializer(serializers.ModelSerializer):
+    # category가 pk로 나오는 이유는 PrimaryKeyRelatedField로 잡아놔서 그렇고
+    # 여기서 오버라이딩하면 됨
+    # source에 넣어주면 이 값을 category필드에 반영해준다!
+    category = serializers.CharField(source='category.name')
+
     class Meta:
         model = Post
         fields = ('id', 'title', 'image', 'like', 'category', )
@@ -21,10 +26,10 @@ class PostRetrieveSerializer(serializers.ModelSerializer):
         exclude = ('create_dt', )
 
 
-class PostLikeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = ('like', )
+# class PostLikeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Post
+#         fields = ('like', )
 
         
 class CommentSerializer(serializers.ModelSerializer):
@@ -46,7 +51,12 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 # 우리가 직접 필드를 정의할 거기 때무넹 Serializer를 상속받는다
+# class CateTagSerializer(serializers.Serializer):
+#     cateList = CategorySerializer(many=True)
+#     tagList = TagSerializer(many=True)
+
+
 class CateTagSerializer(serializers.Serializer):
-    cateList = CategorySerializer(many=True)
-    tagList = TagSerializer(many=True)
+    cateList = serializers.ListField(child=serializers.CharField())
+    tagList = serializers.ListField(child=serializers.CharField())
     
