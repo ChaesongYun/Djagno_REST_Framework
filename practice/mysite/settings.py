@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     
     # third_party_app
     'rest_framework',
+    'django_extensions',
 
     # django
     'django.contrib.admin',

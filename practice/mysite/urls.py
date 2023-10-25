@@ -28,7 +28,7 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     # template로 만든거
     path('api/', include('api.urls')),
-    # api로 만들거
+    # api로 만들 거
     path('api2/', include('api2.urls')),
 ]
 

@@ -20,10 +20,11 @@
 #     queryset = Comment.objects.all()
 #     serializer_class = CommentSerializer
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView
 from api2.serializers import CommentSerializer, PostLikeSerializer, PostListSerializer, PostRetrieveSerializer 
 
-from blog.models import Comment, Post
+from blog.models import Category, Comment, Post, Tag
 
 
 class PostListAPIView(ListAPIView):
@@ -63,3 +64,21 @@ class PostLikeAPIView(UpdateAPIView):
 
         # 화면에 표시되는 걸 바꾸고 싶다면 Response에 담아서 보내야 한다
         return Response(data['like'])
+    
+
+# genericView들은 GetQuerySet, GetObject와 같은 테이블 처리 메서드들이 잇음
+# 이런 메서드를 재사용할 거면 genericView를 상속받는거고
+# 새로 코딩하는게 목적이라면 APIView를 상속받아야 한다
+
+# genericView는 db에 관련된 처리를 하는 뷰에 붙인 용어
+class CateTagAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        cateList = Category.objects.all()
+        tagList = Tag.objects.all()
+        data = {
+            'cateList':cateList,
+            'tagList':tagList,
+        }
+        serializer = CateTagAPIView(instance=data)
+
+        return Response(serializer.data)
