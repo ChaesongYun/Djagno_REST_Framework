@@ -26,7 +26,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import  RetrieveAPIView, CreateAPIView, UpdateAPIView, GenericAPIView, ListAPIView
-from api2.serializers import CommentSerializer, PostListSerializer, PostRetrieveSerializer , CateTagSerializer
+from api2.serializers import CommentSerializer, PostListSerializer , CateTagSerializer, PostSerializerDetail
 
 from blog.models import Category, Comment, Post, Tag
 
@@ -35,12 +35,38 @@ from blog.models import Category, Comment, Post, Tag
 #     queryset = Post.objects.all()
 #     serializer_class = PostListSerializer
 
+def get_prev_next(instance):
+    try:
+        prev = instance.get_previous_by_update_dt()
+    except:
+        prev = None
+
+    try:
+        next_ = instance.get_next_by_update_dt()
+    except instance.DoesNotExist:
+        next_ = None
+    
+    return prev, next_
+
 
 # 상속받은 클래스가 다르기 때문에
 # 코드가 동일해도 다르게 동작
 class PostRetrieveAPIView(RetrieveAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostRetrieveSerializer
+    serializer_class = PostSerializerDetail
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        prevInstance, nextInstance = get_prev_next(instance)
+        commentList = instance.comment_set.all()
+        data = {
+            'post': instance,
+            'prevPost' : prevInstance,
+            'nextPost' : nextInstance,
+            'commentList' : commentList,
+        }
+        serializer = self.get_serializer(instance=data)
+        return Response(serializer.data)
 
 
 class CommentCreateAPIView(CreateAPIView):
