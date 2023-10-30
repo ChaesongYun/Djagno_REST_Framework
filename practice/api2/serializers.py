@@ -69,6 +69,7 @@ class PostSerializerSub(serializers.ModelSerializer):
         fields = ('id', 'title', )
 
 
+
 class CommentSerializerSub(serializers.ModelSerializer):
     class Meta:
         model = Comment
