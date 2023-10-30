@@ -27,7 +27,6 @@ from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import  RetrieveAPIView, CreateAPIView, UpdateAPIView, GenericAPIView, ListAPIView
 from api2.serializers import CommentSerializer, PostListSerializer, PostRetrieveSerializer , CateTagSerializer, PostSerializerDetail
-from rest_framework.viewsets import ModelViewSet
 
 from blog.models import Category, Comment, Post, Tag
 from api.utils import obj_to_comment, obj_to_post, prev_next_post
@@ -45,9 +44,9 @@ from api.utils import obj_to_comment, obj_to_post, prev_next_post
 #     serializer_class = PostRetrieveSerializer
 
 
-# class CommentCreateAPIView(CreateAPIView):
-#     queryset = Comment.objects.all()
-#     serializer_class = CommentSerializer
+class CommentCreateAPIView(CreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
     
 
 # class PostLikeAPIView(UpdateAPIView):
@@ -74,7 +73,17 @@ from api.utils import obj_to_comment, obj_to_post, prev_next_post
 
 
 # get_object()를 사용하려면 GenericAPIView를 상속받아야 한다
-
+class PostLikeAPIView(GenericAPIView):
+    queryset = Post.objects.all()
+    
+    # GET meethod
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.like += 1
+        instance.save()
+        
+        return Response(instance.like)
+    
 
 # genericView들은 GetQuerySet, GetObject와 같은 테이블 처리 메서드들이 잇음
 # 이런 메서드를 재사용할 거면 genericView를 상속받는거고
@@ -107,10 +116,11 @@ class PostPageNumberPagination(PageNumberPagination):
         ]))
     
     
-class PostViewSet(ModelViewSet):
+class PostListAPIView(ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = PostPageNumberPagination
+    
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -121,18 +131,59 @@ class PostViewSet(ModelViewSet):
             'view': self
         }
         
+        
+def get_prev_next(instance):
+    try:
+        prev = instance.get_previous_by_update_dt()
+    except:
+        prev = None
+        
+    try:
+        next_ = instance.get_next_by_update_dt()
+    except:
+        next_ = None
+
+    return prev, next_
+
+
+class PostRetrieveAPIView(RetrieveAPIView):
+    # queryset = Post.objects.all()
+    # serializer_class = PostSerializerDetail
     def get_queryset(self):
         return Post.objects.all().select_related('category').prefetch_related('tags', 'comment_set')
     
-    
-    def like(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.like += 1
-        instance.save()
+        # prevInstance, nextInstance = get_prev_next(instance)
+        commentList = instance.comment_set.all()
         
-        return Response(instance.like)
+        postDict = obj_to_post(instance)
+        prevDict, nextDict = prev_next_post(instance)
+        commentDict = [obj_to_comment(c) for c in commentList]
+        
+        # data = {
+        #     'post': instance, 
+        #     'prevPost': prevInstance,
+        #     'nextPost': nextInstance,
+        #     'commentList': commentList,
+        # }
+        # serializer = self.get_serializer(instance=data)
+        # return Response(serializer.data) # 직렬화는 serializer에서 데이터를 불러올 때 이루어진다
+        
+        dataDict = {
+             'post': postDict, 
+            'prevPost': prevDict,
+            'nextPost': nextDict,
+            'commentList': commentDict,
+        }
+        return Response(dataDict)
     
-    
-class CommentViewSet(ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
+    # def get_serializer_context(self):
+    #     """
+    #     Extra context provided to the serializer class.
+    #     """
+    #     return {
+    #         'request': None,
+    #         'format': self.format_kwarg,
+    #         'view': self
+    #     }
